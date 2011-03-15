@@ -690,6 +690,8 @@ static void try_prune_one_dentry(struct dentry *dentry)
 			spin_unlock(&dentry->d_lock);
 			return;
 		}
+		if (dentry->d_flags & DCACHE_OP_PRUNE)
+			dentry->d_op->d_prune(dentry);
 		dentry = dentry_kill(dentry, 1);
 	}
 }
@@ -896,6 +898,8 @@ static void shrink_dcache_for_umount_subtree(struct dentry *dentry)
 
 	/* detach this root from the system */
 	spin_lock(&dentry->d_lock);
+	if (dentry->d_flags & DCACHE_OP_PRUNE)
+		dentry->d_op->d_prune(dentry);
 	dentry_lru_del(dentry);
 	__d_drop(dentry);
 	spin_unlock(&dentry->d_lock);
@@ -912,6 +916,8 @@ static void shrink_dcache_for_umount_subtree(struct dentry *dentry)
 					    d_u.d_child) {
 				spin_lock_nested(&loop->d_lock,
 						DENTRY_D_LOCK_NESTED);
+				if (dentry->d_flags & DCACHE_OP_PRUNE)
+					dentry->d_op->d_prune(dentry);
 				dentry_lru_del(loop);
 				__d_drop(loop);
 				spin_unlock(&loop->d_lock);
@@ -1375,6 +1381,8 @@ void d_set_d_op(struct dentry *dentry, const struct dentry_operations *op)
 		dentry->d_flags |= DCACHE_OP_REVALIDATE;
 	if (op->d_delete)
 		dentry->d_flags |= DCACHE_OP_DELETE;
+	if (op->d_prune)
+		dentry->d_flags |= DCACHE_OP_PRUNE;
 
 }
 EXPORT_SYMBOL(d_set_d_op);
