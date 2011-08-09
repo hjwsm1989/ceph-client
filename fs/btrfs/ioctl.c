@@ -2323,7 +2323,7 @@ static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
 			else
 				new_key.offset = destoff;
 
-			trans = btrfs_start_transaction(root, 1);
+			trans = btrfs_start_transaction(root, 3);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
 				goto out;
