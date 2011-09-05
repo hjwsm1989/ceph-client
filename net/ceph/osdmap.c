@@ -142,7 +142,7 @@ static struct crush_map *crush_decode(void *pbyval, void *end)
 	int i, j;
 	void **p = &pbyval;
 	void *start = pbyval;
-	u32 magic;
+	u16 struct_v;
 
 	dout("crush_decode %p to %p len %d\n", *p, end, (int)(end - *p));
 
@@ -151,12 +151,16 @@ static struct crush_map *crush_decode(void *pbyval, void *end)
 		return ERR_PTR(-ENOMEM);
 
 	ceph_decode_need(p, end, 4*sizeof(u32), bad);
-	magic = ceph_decode_32(p);
-	if (magic != CRUSH_MAGIC) {
-		pr_err("crush_decode magic %x != current %x\n",
-		       (unsigned)magic, (unsigned)CRUSH_MAGIC);
+	struct_v = ceph_decode_16(p);
+	if (struct_v != 1) {
+		pr_err("crush_decode encoding %d != current %d\n",
+		       (unsigned)struct_v, (unsigned)1);
 		goto bad;
 	}
+	c->features = ceph_decode_16(p);
+	if (c->features & ~CRUSH_FEATURE_ALL)
+		pr_warning("crush_decode feature(s) %xh not supported\n",
+			   c->features & ~CRUSH_FEATURE_ALL);
 	c->max_buckets = ceph_decode_32(p);
 	c->max_rules = ceph_decode_32(p);
 	c->max_devices = ceph_decode_32(p);
@@ -1093,7 +1097,7 @@ static int *calc_pg_raw(struct ceph_osdmap *osdmap, struct ceph_pg pgid,
 			  preferred, osdmap->osd_weight);
 	if (r < 0) {
 		pr_err("error %d from crush rule pool %d ruleset %d type %d"
-		       " size %d\n", poolid, pool->v.crush_ruleset,
+		       " size %d\n", r, poolid, pool->v.crush_ruleset,
 		       pool->v.type, pool->v.size);
 		return NULL;
 	}
