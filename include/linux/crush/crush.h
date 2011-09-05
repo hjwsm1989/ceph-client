@@ -17,7 +17,9 @@
  */
 
 
-#define CRUSH_FEATURE_ALL      0
+#define CRUSH_FEATURE_PUSHPOP  (1<<0)
+
+#define CRUSH_FEATURE_ALL      (CRUSH_FEATURE_PUSHPOP)
 
 #define CRUSH_MAX_DEPTH 10  /* max crush hierarchy depth */
 #define CRUSH_MAX_SET   10  /* max size of a mapping result */
@@ -44,6 +46,10 @@ enum {
 	CRUSH_RULE_EMIT = 4,          /* no args */
 	CRUSH_RULE_CHOOSE_LEAF_FIRSTN = 6,
 	CRUSH_RULE_CHOOSE_LEAF_INDEP = 7,
+	CRUSH_RULE_PUSH = 8,          /* front of w to top of stack */
+	CRUSH_RULE_UNSHIFT = 9,       /* front of w to bottom of stack */
+	CRUSH_RULE_POP = 10,          /* top of stack to end of w */
+	CRUSH_RULE_SHIFT = 11,        /* bottom of stack to end of w */
 };
 
 /*
@@ -129,8 +135,7 @@ struct crush_bucket_list {
 };
 
 struct crush_bucket_tree {
-	struct crush_bucket h;  /* note: h.size is _tree_ size, not number of
-				   actual items */
+	struct crush_bucket h;
 	__u8 num_nodes;
 	__u32 *node_weights;
 };
@@ -173,7 +178,7 @@ struct crush_map {
 
 
 /* crush.c */
-extern int crush_get_bucket_item_weight(struct crush_bucket *b, int pos);
+extern int crush_get_bucket_item_weight(const struct crush_bucket *b, int pos);
 extern void crush_calc_parents(struct crush_map *map);
 extern void crush_destroy_bucket_uniform(struct crush_bucket_uniform *b);
 extern void crush_destroy_bucket_list(struct crush_bucket_list *b);
@@ -181,5 +186,10 @@ extern void crush_destroy_bucket_tree(struct crush_bucket_tree *b);
 extern void crush_destroy_bucket_straw(struct crush_bucket_straw *b);
 extern void crush_destroy_bucket(struct crush_bucket *b);
 extern void crush_destroy(struct crush_map *map);
+
+static inline int crush_calc_tree_node(int i)
+{
+	return ((i+1) << 1)-1;
+}
 
 #endif
