@@ -502,10 +502,12 @@ int crush_do_rule(struct crush_map *map,
 	}
 
 	for (step = 0; step < rule->len; step++) {
+		struct crush_rule_step *curstep = &rule->steps[step];
+
 		firstn = 0;
-		switch (rule->steps[step].op) {
+		switch (curstep->op) {
 		case CRUSH_RULE_TAKE:
-			w[0] = rule->steps[step].arg1;
+			w[0] = curstep->arg1;
 			if (force_pos >= 0) {
 				if (force_context[force_pos] != w[0]) {
 					rc = -1;  /* forced mapping dne */
@@ -519,14 +521,15 @@ int crush_do_rule(struct crush_map *map,
 		case CRUSH_RULE_CHOOSE_LEAF_FIRSTN:
 		case CRUSH_RULE_CHOOSE_FIRSTN:
 			firstn = 1;
+			/* fall through */
 		case CRUSH_RULE_CHOOSE_LEAF_INDEP:
 		case CRUSH_RULE_CHOOSE_INDEP:
 			BUG_ON(wsize == 0);
 
 			recurse_to_leaf =
-				rule->steps[step].op ==
+				curstep->op ==
 				 CRUSH_RULE_CHOOSE_LEAF_FIRSTN ||
-				rule->steps[step].op ==
+				curstep->op ==
 				CRUSH_RULE_CHOOSE_LEAF_INDEP;
 
 			/* reset output */
@@ -538,7 +541,7 @@ int crush_do_rule(struct crush_map *map,
 				 * basically, numrep <= 0 means relative to
 				 * the provided result_max
 				 */
-				numrep = rule->steps[step].arg1;
+				numrep = curstep->arg1;
 				if (numrep <= 0) {
 					numrep += result_max;
 					if (numrep <= 0)
@@ -549,7 +552,7 @@ int crush_do_rule(struct crush_map *map,
 					/* skip any intermediate types */
 					while (force_pos &&
 					       force_context[force_pos] < 0 &&
-					       rule->steps[step].arg2 !=
+					       curstep->arg2 !=
 					       map->buckets[-1 -
 					       force_context[force_pos]]->type)
 						force_pos--;
@@ -563,7 +566,7 @@ int crush_do_rule(struct crush_map *map,
 						      map->buckets[-1-w[i]],
 						      weight,
 						      x, numrep,
-						      rule->steps[step].arg2,
+						      curstep->arg2,
 						      o+osize, j,
 						      firstn,
 						      recurse_to_leaf, c+osize);
