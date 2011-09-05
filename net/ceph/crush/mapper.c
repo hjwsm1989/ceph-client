@@ -1,21 +1,11 @@
 
-#ifdef __KERNEL__
-# include <linux/string.h>
-# include <linux/slab.h>
-# include <linux/bug.h>
-# include <linux/kernel.h>
-# ifndef dprintk
-#  define dprintk(args...)
-# endif
-#else
-# include <string.h>
-# include <stdio.h>
-# include <stdlib.h>
-# include <assert.h>
-# define BUG_ON(x) assert(!(x))
-# define dprintk(args...) /* printf(args) */
-# define kmalloc(x, f) malloc(x)
-# define kfree(x) free(x)
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#ifndef dprintk
+# define dprintk(args...)
 #endif
 
 #include <linux/crush/crush.h>
